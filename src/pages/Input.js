@@ -1,11 +1,12 @@
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import React from "react";
+import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { firestore } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
 const Input = () => {
   const navigate = useNavigate();
+  const [latestWifiData, setLatestWifiData] = useState(null);
   const generatePassword = (length) => {
     // const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const charset = "ABCDEFGHJKMNPQRSTUVWXYZ123456789";
@@ -46,14 +47,46 @@ const Input = () => {
   const handleRefresh = () => {
     window.location.reload();
   };
-  
+
   const goToHome = () => {
     navigate("/");
   };
 
+  useEffect(() => {
+    const fetchLatestWifiData = async () => {
+      try {
+        const wifiCollection = collection(firestore, "wifi");
+        const q = query(
+          wifiCollection,
+          orderBy("createdDate", "desc"),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const latestData = querySnapshot.docs[0].data();
+          setLatestWifiData(latestData);
+        }
+      } catch (error) {
+        console.error("Error fetching latest wifi data: ", error);
+      }
+    };
+
+    fetchLatestWifiData();
+  }, []);
+
   return (
     <div style={container}>
-      <form onSubmit={handleSubmit(onSubmit)} style={formStyle}>
+      {latestWifiData && (
+
+      <div style={cardStyle}>
+        <h2>WiFi Sekarang</h2>
+        <span style={labelStyle}> SSID: {latestWifiData.ssid}</span>
+        <span style={labelStyle}> Password: {latestWifiData.password}</span>
+      </div>
+      )}
+      <form onSubmit={handleSubmit(onSubmit)} style={cardStyle}>
+        <h2>Ubah WiFi</h2>
         <label style={labelStyle}>
           SSID:
           <input
@@ -89,16 +122,17 @@ const Input = () => {
 
 const container = {
   display: "flex",
+  flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
   height: "100vh",
 };
 
-const formStyle = {
+const cardStyle = {
   display: "flex",
   flexDirection: "column",
-  maxWidth: "300px",
-  margin: "auto",
+  width: "300px",
+  margin: "16px",
   padding: "20px",
   border: "1px solid #ccc",
   borderRadius: "5px",
