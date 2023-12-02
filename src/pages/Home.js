@@ -32,8 +32,15 @@ const Home = () => {
   }, []);
 
   const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp.seconds * 1000); // Convert to milliseconds
-    return date.toLocaleString(); // Adjust the format as needed
+    const date = new Date(timestamp.seconds * 1000);
+    
+    const dateFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    const timeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false };
+    
+    const formattedDate = date.toLocaleDateString('en-US', dateFormatOptions);
+    const formattedTime = date.toLocaleTimeString('en-US', timeFormatOptions);
+    
+    return `${formattedDate}, ${formattedTime}`;
   };
 
   const goToInput = () => {
