@@ -1,0 +1,137 @@
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { firestore } from "../firebase";
+import { useNavigate } from "react-router-dom";
+
+const Input = () => {
+  const navigate = useNavigate();
+  const generatePassword = (length) => {
+    // const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const charset = "ABCDEFGHJKMNPQRSTUVWXYZ123456789";
+    let password = "";
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset.charAt(randomIndex);
+    }
+
+    return password;
+  };
+
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      ssid: "Warung Amanah",
+      password: generatePassword(20),
+    },
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      const wifiCollection = collection(firestore, "wifi");
+      await addDoc(wifiCollection, {
+        ssid: data.ssid,
+        password: data.password,
+        createdDate: serverTimestamp(),
+      });
+      reset();
+
+      // Redirect to the home page ("/") after successful submission
+      navigate("/");
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+  
+  const goToHome = () => {
+    navigate("/");
+  };
+
+  return (
+    <div style={container}>
+      <form onSubmit={handleSubmit(onSubmit)} style={formStyle}>
+        <label style={labelStyle}>
+          SSID:
+          <input
+            type="text"
+            {...register("ssid")}
+            style={inputStyle}
+            required
+            readOnly
+          />
+        </label>
+        <label style={labelStyle}>
+          Password:
+          <input
+            type="text"
+            {...register("password")}
+            style={inputStyle}
+            required
+          />
+        </label>
+        <button type="submit" style={buttonStyle}>
+          Simpan
+        </button>
+        <button type="button" onClick={handleRefresh} style={buttonStyle2}>
+          Refresh
+        </button>
+        <button type="button" onClick={goToHome} style={buttonStyle2}>
+          Kembali
+        </button>
+      </form>
+    </div>
+  );
+};
+
+const container = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  height: "100vh",
+};
+
+const formStyle = {
+  display: "flex",
+  flexDirection: "column",
+  maxWidth: "300px",
+  margin: "auto",
+  padding: "20px",
+  border: "1px solid #ccc",
+  borderRadius: "5px",
+};
+
+const labelStyle = {
+  marginBottom: "8px",
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "8px",
+  boxSizing: "border-box",
+  marginBottom: "16px",
+};
+
+const buttonStyle = {
+  backgroundColor: "#4CAF50",
+  color: "white",
+  padding: "10px 15px",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+};
+
+const buttonStyle2 = {
+  backgroundColor: "#a7a7a7",
+  color: "white",
+  padding: "10px 15px",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+  marginTop: 16,
+};
+
+export default Input;
